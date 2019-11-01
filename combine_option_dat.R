@@ -7,7 +7,7 @@ combine_option_year_dat <- function(opt_year) {
                        , "close", "volume", "Final_p", "OI", "H1", "H2", "H3", "H4", "H5", "period")
   
   TXO_column <- c("date", "LTD", "strike", "c_or_p", "open", "high", "low"
-                  , "close", "volume", "OI")
+                  , "close", "Final_p", "volume", "OI")
   
   LTD_season <- c("2018-03", "2018-06", "2018-09", "2018-12")
   
@@ -35,10 +35,11 @@ combine_option_year_dat <- function(opt_year) {
   option1 %<>%
     filter(contract == "TXO" & period == "一般" & open != "-" & 
              LTD != "NA" & (LTD %in% LTD_season)) %>% 
-    select(TXO_column)
+    select(TXO_column)%>% 
+    mutate(weekdays = weekdays(date))
   
   
-  for (opt_month in c("01","02", "03", "04", "05", "06", "07",
+  for (opt_month in c("02", "03", "04", "05", "06", "07",
                       "08", "09", "10", "11", "12")) {
     
 
@@ -69,7 +70,8 @@ combine_option_year_dat <- function(opt_year) {
       option %<>%
         filter(contract == "TXO" & period == "一般" & open != "-" & 
                  LTD != "NA" & (LTD %in% LTD_season)) %>% 
-        select(TXO_column)
+        select(TXO_column) %>% 
+        mutate(weekdays = weekdays(date))
       
       
       
@@ -78,7 +80,8 @@ combine_option_year_dat <- function(opt_year) {
     
     
   }
-
+  
+  option1[,5:8] %<>% apply(2,as.numeric) %>% as.tibble()
   return(option1)
 
 }
