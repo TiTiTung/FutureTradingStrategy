@@ -23,6 +23,7 @@ library(readr)
 library(lubridate)
 library(zoo)
 library(timeDate)
+library("quantmod")
 
 # ==========================================================================
 # column_name是原始資料所有的column, strategy_column是建構策略時所需的column
@@ -78,4 +79,40 @@ option_2018_01[,5:8] %<>% apply(2,as.numeric) %>% as.tibble()
 # ==========================================================================
 
 option = rbind(option, option_2018_01)
+
+
+
+TXO_win_5_year <- read_csv("TXO_win_5_year.csv", locale = locale(encoding = "big5")) 
+TXO_lost_5_year <- read_csv("TXO_lost_5_year.csv", locale = locale(encoding = "big5")) 
+
+filter_year <- 2017
+TXO_win <- TXO_win_5_year %>% 
+  filter(date %>% year() == filter_year)
+TXO_lost <- TXO_lost_5_year %>% 
+  filter(date %>% year() == filter_year)
+
+str_c(filter_year, " : ", (n = nrow(TXO_win))/4)
+(nrow(TXO_lost))/2
+
+-sum(TXO_win[seq(1,n,4),]$open+TXO_win[seq(2,n,4),]$open)+ sum(TXO_win[seq(4,n,4),]$open)
+
+-sum(TXO_lost$open)
+
+
+
+#==========================================================================
+# 跨式策略開始
+# 選定年份
+#==========================================================================
+opt_year = 2018
+
+stock = "^TWII"
+from =  str_c(opt_year, "-01-01")
+to =  str_c(opt_year, "-12-31")
+
+twii <- getSymbols(stock, auto.assign=FALSE,from=from,to=to) 
+
+plot(twii)
+
+
 

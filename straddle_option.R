@@ -28,8 +28,8 @@ library("quantmod")
 # 跨式策略開始
 # 選定年份
 #==========================================================================
-opt_year = 2015
-
+opt_year = 2018
+{
 stock = "^TWII"
 from =  str_c(opt_year, "-01-01")
 to =  str_c(opt_year, "-12-31")
@@ -60,6 +60,7 @@ change_contract = 0
 buy_price_all <- vector("integer", 0)
 buy_price_all_2 <- vector("integer", 0)
 sell_price_all <- vector("integer", 0)
+}
 
 while (i != nrow(target_price)) {
 
@@ -240,5 +241,7 @@ TXO_win_5_year <- rbind(TXO2014_win, TXO2015_win, TXO2016_win, TXO2017_win, TXO2
 TXO_lost_5_year <- rbind(TXO2014_lost, TXO2015_lost, TXO2016_lost, TXO2017_lost, TXO2018_lost)
 
 TXO_win_5_year$strike %<>% as.integer()
+TXO_lost_5_year$strike %<>% as.integer()
+
 write_csv(TXO_win_5_year, "TXO_win_5_year.csv")
 write_csv(TXO_lost_5_year, "TXO_lost_5_year.csv")
