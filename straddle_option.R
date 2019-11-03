@@ -1,15 +1,35 @@
+# ==========================================================================
+# sessionInfo()
+# Sys.getlocale()
+# 應該要長這樣：[1] "en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/C"
+# https://shihs.github.io/blog/r/2018/10/04/R-RStudtio編碼問題/
+# ==========================================================================
+Sys.setlocale(category = "LC_ALL", locale = "en_US.UTF-8")
+
+source("combine_option_dat.R")
 setwd("~/Documents/FutureTradingStrategy")
 
-write_csv(option, "TXO2015.csv")
-setwd("opt_2017")
-setwd("opt_2018")
-TXO2017 <- combine_option_year_dat_2017(2017)
-TXO2016 <- normal_period_combine_option(2016)
-TXO2015 <- season_combine_option(2015)
-TXO2018 = read_csv("TXO2015.csv")
-
+#==========================================================================
+# Build a Future Trading Strategy  # TI-TI TUNG 
+# 載入套件, 只有 magrittr 才能夠使用 %<>% 
+#==========================================================================
+library(magrittr)
+library(ggplot2)
+library(stringr)
+library(tidyverse)
+library(highcharter)
+library(readr)
+library(lubridate)
+library(zoo)
+library(timeDate)
 library("quantmod")
-opt_year = 2018
+
+#==========================================================================
+# 跨式策略開始
+# 選定年份
+#==========================================================================
+opt_year = 2015
+
 stock = "^TWII"
 from =  str_c(opt_year, "-01-01")
 to =  str_c(opt_year, "-12-31")
@@ -20,7 +40,7 @@ twii_oppen <- twii$TWII.Open %>%
   round(-2)
 
 TXO_year_dat <- read_csv(str_c("TXO", opt_year, ".csv"), locale = locale(encoding = "big5"))
-
+TXO_year_dat$date %<>% as.Date()
 
 
 
@@ -28,8 +48,8 @@ TXO_year_dat <- read_csv(str_c("TXO", opt_year, ".csv"), locale = locale(encodin
 twii_oppen <- twii$TWII.Open %>% 
   round(-2)
 buy_and_sell <- TXO_year_dat[0,]
-lose_contract_all <- TXO_year_dat[0,]
-lose_contract_LTD_all <- TXO_year_dat[0,]
+lost_contract_all <- TXO_year_dat[0,]
+lost_contract_LTD_all <- TXO_year_dat[0,]
 sell <- TXO_year_dat[1,]
 i = 1
 
@@ -93,11 +113,11 @@ while (i != nrow(target_price)) {
       
       change_contract = change_contract + 1
       
-      lose_contract = target_price[1:2,]
-      lose_contract_all = rbind(lose_contract_all, lose_contract)
+      lost_contract = target_price[1:2,]
+      lost_contract_all = rbind(lost_contract_all, lost_contract)
       
-      lose_contract_LTD = target_price[i,]
-      lose_contract_LTD_all = rbind(lose_contract_LTD_all, lose_contract_LTD)
+      lost_contract_LTD = target_price[i,]
+      lost_contract_LTD_all = rbind(lost_contract_LTD_all, lost_contract_LTD)
       
       break_piont = 1
       sell = target_price[i,]
@@ -114,17 +134,27 @@ while (i != nrow(target_price)) {
           print(target_price[1,])
           print(target_price[i,])
           
-          buy_call = target_price[1,]
+          
+          # 賣出價格應為當日結算價以高出成本後, 第二天相同履約價格的open price買進, 
+          # 不可設計成當日結算價以高出成本後, 當天就買進
+          sell_price_filter <- target_price %>% 
+            filter(date > target_price$date[i] & 
+                     LTD == target_price$LTD[i] & 
+                     strike == target_price$strike[i] & 
+                     c_or_p == target_price$c_or_p[i])
+          
           buy_put = target_price[2,]
-          sell = target_price[i,]
-          buy_and_sell = rbind(buy_and_sell, buy_call, buy_put, sell)
-          
-          buy_price = buy_call[1,5]
-          sell_price = sell[,5]
-          
-          buy_price_all %<>% append(buy_price) %>% unlist()
-          buy_price_all_2 %<>% append(buy_put[1,5]) %>% unlist()
-          sell_price_all %<>% append(sell_price) %>% unlist()
+          buy_call = target_price[1,]
+          trading_point = target_price[i,]
+          sell = sell_price_filter[1,]
+          buy_and_sell = rbind(buy_and_sell, buy_put, buy_call, trading_point, sell)
+            
+            buy_price = buy_call[1,5]
+            sell_price = sell[,5]
+            
+            buy_price_all %<>% append(buy_price) %>% unlist()
+            buy_price_all_2 %<>% append(buy_put[1,5]) %>% unlist()
+            sell_price_all %<>% append(sell_price) %>% unlist()
           
           break
         } else if (target_price$Final_p[i] > (target_price$open[1] + target_price$open[2]) &
@@ -137,17 +167,27 @@ while (i != nrow(target_price)) {
           print(target_price[2,])
           print(target_price[i,])
           
+          
+          # 賣出價格應為當日結算價以高出成本後, 第二天相同履約價格的open price買進, 
+          # 不可設計成當日結算價以高出成本後, 當天就買進
+          sell_price_filter <- target_price %>% 
+            filter(date > target_price$date[i] & 
+                     LTD == target_price$LTD[i] & 
+                     strike == target_price$strike[i] & 
+                     c_or_p == target_price$c_or_p[i])
+          
           buy_put = target_price[2,]
           buy_call = target_price[1,]
-          sell = target_price[i,]
-          buy_and_sell = rbind(buy_and_sell, buy_put, buy_call, sell)
+          trading_point = target_price[i,]
+          sell = sell_price_filter[1,]
+          buy_and_sell = rbind(buy_and_sell, buy_put, buy_call, trading_point, sell)
           
-          buy_price = buy_put[1,5]
-          sell_price = sell[,5]
-          
-          buy_price_all %<>% append(buy_price) %>% unlist()
-          buy_price_all_2 %<>% append(buy_call[1,5]) %>% unlist()
-          sell_price_all %<>% append(sell_price) %>% unlist()
+            buy_price = buy_put[1,5]
+            sell_price = sell[,5]
+            
+            buy_price_all %<>% append(buy_price) %>% unlist()
+            buy_price_all_2 %<>% append(buy_call[1,5]) %>% unlist()
+            sell_price_all %<>% append(sell_price) %>% unlist()
           
           break
           
@@ -162,21 +202,43 @@ while (i != nrow(target_price)) {
   }
 }
 
-lose_contract_LTD_all
+# 查看資料中的四個季度 (3, 6, ,9 ,12)
+lost_contract_LTD_all
 
+# 查看買進與賣出點
+
+# 每一次的買賣分為4個row, 前兩個為買進的call跟put, 
+# 第三個為結算價已經高過成本的時點, 第四個row為當
+# 成本底平時, 的下一天的開盤價, 該價格即為賣出時點
 buy_and_sell 
 
-lose_contract_all 
-lose_contract_all$open[-(1:2)]
 
-target_price
+# 為選擇權契約到期時, 皆未達到賣出目標的時點
+lost_contract_all 
 
-change_contract 
 
-buy_price_all
-buy_price_all_2
-sell_price_all
 
-(sum(sell_price_all) - sum(buy_price_all+buy_price_all_2)) / sum(buy_price_all+buy_price_all_2) * 100
-    
-sum(buy_price_all+buy_price_all_2) /sum(sell_price_all, lose_contract_all$open[-(1:2)])*100
+
+
+
+TXO2014_win <- buy_and_sell
+TXO2014_lost <- lost_contract_all
+
+TXO2015_win <- buy_and_sell
+TXO2015_lost <- lost_contract_all
+
+TXO2016_win <- buy_and_sell
+TXO2016_lost <- lost_contract_all
+
+TXO2017_win <- buy_and_sell
+TXO2017_lost <- lost_contract_all
+
+TXO2018_win <- buy_and_sell
+TXO2018_lost <- lost_contract_all
+
+TXO_win_5_year <- rbind(TXO2014_win, TXO2015_win, TXO2016_win, TXO2017_win, TXO2018_win)
+TXO_lost_5_year <- rbind(TXO2014_lost, TXO2015_lost, TXO2016_lost, TXO2017_lost, TXO2018_lost)
+
+TXO_win_5_year$strike %<>% as.integer()
+write_csv(TXO_win_5_year, "TXO_win_5_year.csv")
+write_csv(TXO_lost_5_year, "TXO_lost_5_year.csv")

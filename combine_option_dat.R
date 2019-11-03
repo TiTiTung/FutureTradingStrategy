@@ -83,6 +83,7 @@ combine_option_year_dat <- function(opt_year) {
   }
   
   option1[,5:8] %<>% apply(2,as.numeric) %>% as.tibble()
+  option1$date %<>% as.Date()
   return(option1)
 
 }
@@ -169,6 +170,7 @@ combine_option_year_dat_2017 <- function(opt_year) {
   }
   
   option1[,5:8] %<>% apply(2,as.numeric) %>% as.tibble()
+  option1$date %<>% as.Date()
   return(option1)
   
 }
@@ -255,6 +257,7 @@ normal_period_combine_option <- function(opt_year) {
   }
   
   option1[,5:8] %<>% apply(2,as.numeric) %>% as.tibble()
+  option1$date %<>% as.Date()
   return(option1)
   
 }
@@ -271,7 +274,7 @@ season_combine_option <- function(opt_year) {
   LTD_season <- c(str_c(opt_year,"-03"), str_c(opt_year,"-06"), 
                   str_c(opt_year,"-09"), str_c(opt_year,"-12"))
   
-  option1 =read_csv(str_c(opt_year, "_01_opt", ".csv"), locale = locale(encoding = "big5"))
+  option1 =read_csv(str_c(opt_year, "_1_opt", ".csv"), locale = locale(encoding = "big5"))
   colnames(option1) <- all_column_name
   
   # 把中文的買賣全轉成call and put
@@ -299,13 +302,13 @@ season_combine_option <- function(opt_year) {
     mutate(weekdays = weekdays(date %>% as.Date()))
   
   
-  for (opt_month in c("02", "03", "04")) {
+  for (opt_month in c("2", "3", "4")) {
     
     
     
     
     option <- 
-      read_csv(str_c(opt_year, "_", opt_month,"opt_", ".csv"), locale = locale(encoding = "big5"))
+      read_csv(str_c(opt_year, "_", opt_month,"_opt", ".csv"), locale = locale(encoding = "big5"))
     colnames(option) <- all_column_name
     
     # 把中文的買賣全轉成call and put
@@ -341,6 +344,7 @@ season_combine_option <- function(opt_year) {
   }
   
   option1[,5:8] %<>% apply(2,as.numeric) %>% as.tibble()
+  option1$date %<>% as.Date()
   return(option1)
   
 }
