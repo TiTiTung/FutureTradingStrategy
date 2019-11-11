@@ -9,6 +9,7 @@ Sys.setlocale(category = "LC_ALL", locale = "en_US.UTF-8")
 source("combine_option_dat.R")
 setwd("opt_2018")
 setwd("~/Documents/FutureTradingStrategy")
+setwd("TXO_5_year_dat")
 
 #==========================================================================
 # Build a Future Trading Strategy  # TI-TI TUNG 
