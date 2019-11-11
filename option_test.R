@@ -24,15 +24,17 @@ library(readr)
 library(lubridate)
 library(zoo)
 library(timeDate)
+library(bindrcpp)
 library("quantmod")
 
 
-
+opt_final_price <- read_csv("Opt_and_TWII_Final_settlement_price.csv", locale = locale(encoding = "big5")) 
 TXO_win_5_year <- read_csv("TXO_win_ratio_0.2.csv", locale = locale(encoding = "big5")) 
 TXO_lost_5_year <- read_csv("TXO_lost_ratio_0.2.csv", locale = locale(encoding = "big5")) 
 TXO_season_LTD_5_year <- read_csv("TXO_season_LTD_5_year.csv", locale = locale(encoding = "big5")) 
+
+filter_year <- 2018
 {
-filter_year <- 2014
 TXO_win <- TXO_win_5_year %>% filter(date %>% year() == filter_year)
 TXO_lost <- TXO_lost_5_year %>% filter(date %>% year() == filter_year)
 TXO_season <- TXO_season_LTD_5_year %>% filter(date %>% year() == filter_year)
@@ -44,9 +46,15 @@ str_c(filter_year, " : ", (n = nrow(TXO_win))/4)
 cost_win = sum(TXO_win[seq(1,n,4),]$open+TXO_win[seq(2,n,4),]$open) 
 revenue = sum(TXO_win[seq(4,n,4),]$Final_p+TXO_win[seq(3,n,4),]$Final_p)
 # 輸的金額
-cost_lost = -(sum(TXO_season$open) - sum(TXO_lost$open)) 
+cost_lost = sum(TXO_lost$open)
 # 總成本
 total_cost = sum(cost_win, cost_lost) 
+
+settlementabs_revenue <- opt_final_price %>% 
+  filter(Final_settlement_date %>% year() == filter_year) %>% 
+  mutate(revenue = (Final_settlement_price - TWII_close) %>% abs()) %>% 
+  select(revenue) %>% 
+  sum()
 }
 
 
@@ -56,7 +64,7 @@ n/((nrow(TXO_lost))/2+n)
 # 贏的報酬率
 (revenue - cost_win) / cost_win * 100
 # 總的報酬率
-(revenue - total_cost) / total_cost * 100
+(revenue - total_cost + settlementabs_revenue) / total_cost * 100
 
 
 
@@ -66,7 +74,7 @@ n/((nrow(TXO_lost))/2+n)
 # 跨式策略開始
 # 選定年份
 #==========================================================================
-opt_year = 2018
+opt_year = 2017
 
 stock = "^TWII"
 from =  str_c(opt_year, "-01-01")
@@ -76,5 +84,4 @@ twii <- getSymbols(stock, auto.assign=FALSE,from=from,to=to)
 
 plot(twii)
 
-
-
+hchart(twii)
